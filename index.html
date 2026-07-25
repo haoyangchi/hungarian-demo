@@ -3,150 +3,351 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>匈牙利算法演示 - Hungarian Algorithm for Assignment Problem (Section 25.3)</title>
+<title>匈牙利算法逐步演示 — Hungarian Algorithm for Assignment Problem</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height:100vh; }
-.header { background: linear-gradient(135deg, #16213e, #0f3460); padding: 14px 24px; display:flex; align-items:center; justify-content:space-between; border-bottom: 2px solid #e94560; }
-.header h1 { font-size: 1.3em; color: #e94560; }
-.header .subtitle { font-size: 0.8em; color: #a0a0c0; }
-.main-container { display:flex; height:calc(100vh - 60px); }
-.left-panel { width: 320px; background: #16213e; padding: 16px; overflow-y:auto; border-right: 1px solid #0f3460; }
-.center-panel { flex:1; display:flex; flex-direction:column; }
-.canvas-area { flex:1; position:relative; background: #1a1a2e; }
-canvas { display:block; }
-.right-panel { width: 380px; background: #16213e; padding: 16px; overflow-y:auto; border-left: 1px solid #0f3460; }
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #79c0ff;
+    --gold: #e3b341;
+    --green: #3fb950;
+    --red: #f85149;
+    --purple: #8b5cf6;
+    --orange: #d2991d;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,.3);
+  }
 
-.control-group { margin-bottom: 16px; }
-.control-group label { display:block; font-size:0.8em; color:#8899aa; margin-bottom:4px; }
-.btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.2s; margin: 2px; }
-.btn-primary { background: #e94560; color: white; }
-.btn-primary:hover { background: #ff6b81; }
-.btn-primary:disabled { background: #555; color: #999; cursor: not-allowed; }
-.btn-secondary { background: #0f3460; color: #ccc; }
-.btn-secondary:hover { background: #1a4a7a; }
-.btn-accent { background: #533483; color: #ccc; }
-.btn-accent:hover { background: #6a4c93; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
 
-select, input[type=range] { background: #0f3460; color:#e0e0e0; border:1px solid #334; padding:6px 10px; border-radius:4px; font-size:0.9em; width:100%; }
-input[type=range] { padding:0; height:6px; -webkit-appearance:none; appearance:none; background:#334; border-radius:3px; outline:none; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; background:#e94560; border-radius:50%; cursor:pointer; }
+  /* ── Header ── */
+  .header {
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:100;
+    backdrop-filter:blur(12px);
+  }
+  .header h1 {
+    font-size:1.3rem;
+    font-weight:700;
+    letter-spacing:-0.3px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .header h1 .icon { font-size:1.5rem; }
+  .header-sub { font-size:0.78rem; color:var(--text2); font-weight:400; }
 
-.step-info { background: #0f3460; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-.step-info .step-num { color: #e94560; font-weight: bold; font-size: 1.1em; }
-.step-info .step-desc { margin-top: 6px; line-height: 1.5; font-size: 0.9em; }
-.step-info .step-detail { margin-top: 4px; font-size: 0.8em; color: #aab; }
+  /* ── Controls ── */
+  .controls {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .btn {
+    padding:8px 18px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text);
+    cursor:pointer;
+    font-size:0.88rem;
+    font-weight:500;
+    transition:all .18s;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .btn:hover {
+    background:#21262d;
+    border-color:var(--accent);
+    transform:translateY(-1px);
+    box-shadow:0 2px 8px rgba(88,166,255,.15);
+  }
+  .btn:active { transform:scale(0.97); }
+  .btn:disabled {
+    opacity:.4;
+    cursor:not-allowed;
+    transform:none;
+    border-color:var(--border);
+  }
+  .btn-primary {
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+    font-weight:600;
+  }
+  .btn-primary:hover { background:#4090e0; border-color:#4090e0; }
+  .btn-primary:disabled { background:var(--surface2); border-color:var(--border); color:var(--text2); }
+  .btn-success {
+    background:#1a7f37;
+    border-color:#1a7f37;
+    color:#fff;
+    font-weight:600;
+  }
+  .btn-success:hover { background:#238636; border-color:#238636; }
+  .btn-warning {
+    background:var(--orange);
+    border-color:var(--orange);
+    color:#000;
+    font-weight:600;
+  }
+  .btn-warning:hover { background:#d4a72c; }
 
-.info-box { background: #0f3460; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-.info-box h3 { font-size: 0.85em; color: #e94560; margin-bottom: 8px; border-bottom: 1px solid #334; padding-bottom: 4px; }
-.info-box .label-val { display:inline-block; background:#1a3a5c; padding:2px 8px; margin:2px; border-radius:3px; font-size:0.8em; font-family: 'Consolas', monospace; }
-.info-box .label-val.highlight { background:#e94560; color:white; }
+  .size-select {
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text);
+    font-size:0.88rem;
+    cursor:pointer;
+  }
+  .size-select:hover { border-color:var(--accent); }
 
-.matching-list { font-family: 'Consolas', monospace; font-size: 0.85em; color: #4ecca3; }
-.delta-highlight { color: #ffd700; font-weight: bold; font-size: 1.1em; }
+  .speed-slider {
+    width:90px;
+    accent-color:var(--accent);
+    cursor:pointer;
+  }
 
-.weight-table { width:100%; border-collapse:collapse; font-size:0.75em; font-family:'Consolas',monospace; }
-.weight-table td, .weight-table th { padding:3px 5px; text-align:center; border:1px solid #334; }
-.weight-table .eq-edge { background: rgba(233,69,96,0.35); color: #ff9999; }
-.weight-table .match-edge { background: rgba(78,204,163,0.4); color: #4ecca3; font-weight:bold; }
-.weight-table .row-label, .weight-table .col-label { color: #aab; font-weight:bold; background: #0d2540; }
-.weight-table .forest-l { background: rgba(83,52,131,0.5); }
-.weight-table .forest-r { background: rgba(83,52,131,0.3); }
+  /* ── Layout ── */
+  .main-grid {
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:16px;
+    padding:16px;
+    max-width:1440px;
+    margin:0 auto;
+    min-height:calc(100vh - 75px);
+  }
+  @media(max-width:1100px) {
+    .main-grid { grid-template-columns:1fr; }
+    .canvas-panel { height:55vh; }
+  }
 
-.legend { display:flex; flex-wrap:wrap; gap:8px; font-size:0.7em; margin-top:8px; }
-.legend-item { display:flex; align-items:center; gap:4px; }
-.legend-color { width:14px; height:14px; border-radius:3px; }
+  /* ── Canvas Panel ── */
+  .canvas-panel {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    height:62vh;
+    min-height:420px;
+  }
+  .canvas-panel canvas {
+    width:100%; height:100%; display:block;
+  }
+  .canvas-legend {
+    position:absolute;
+    bottom:12px;
+    left:12px;
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    font-size:0.72rem;
+    color:var(--text2);
+    background:rgba(13,17,23,.85);
+    padding:6px 12px;
+    border-radius:6px;
+    backdrop-filter:blur(6px);
+    border:1px solid var(--border);
+  }
+  .canvas-legend span { display:flex; align-items:center; gap:4px; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
 
-.step-list { max-height:200px; overflow-y:auto; font-size:0.75em; }
-.step-list .done { color:#4ecca3; }
-.step-list .active { color:#e94560; font-weight:bold; }
-.step-list .pending { color:#666; }
+  /* ── Side Panel ── */
+  .side-panel {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    overflow-y:auto;
+    max-height:62vh;
+  }
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .card h3 {
+    font-size:0.88rem;
+    color:var(--accent2);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
 
-.algorithm-ps { font-family:'Consolas',monospace; font-size:0.7em; line-height:1.4; color:#aab; background:#0d2540; padding:8px; border-radius:4px; white-space:pre; }
+  /* ── Step Info ── */
+  .step-info {
+    background:var(--surface);
+    border:2px solid var(--purple);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    animation:pulse 2s ease-in-out;
+  }
+  @keyframes pulse {
+    0%{box-shadow:0 0 0 rgba(139,92,246,.3);}
+    50%{box-shadow:0 0 16px rgba(139,92,246,.2);}
+    100%{box-shadow:0 0 0 rgba(139,92,246,.3);}
+  }
+  .step-num {
+    font-size:0.82rem;
+    color:var(--purple);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .step-desc {
+    font-size:0.9rem;
+    line-height:1.5;
+    margin-top:4px;
+  }
+
+  /* ── Weight Matrix ── */
+  .weight-table {
+    border-collapse:collapse;
+    width:100%;
+    font-size:0.78rem;
+  }
+  .weight-table td, .weight-table th {
+    padding:6px 8px;
+    text-align:center;
+    border:1px solid var(--border);
+  }
+  .weight-table .col-label { background:var(--surface2); color:var(--text2); font-weight:600; }
+  .weight-table .row-label { background:var(--surface2); color:var(--text2); font-weight:600; }
+  .weight-table td.match-edge { background:rgba(63,185,80,.25); color:var(--green); font-weight:700; }
+  .weight-table td.eq-edge { background:rgba(88,166,255,.1); }
+  .weight-table td.forest-l { border:2px solid var(--purple); }
+
+  .delta-highlight {
+    color:var(--gold);
+    font-weight:700;
+    font-size:1.1em;
+  }
+
+  .label-val { font-size:0.75rem; display:inline-block; margin:2px 4px; padding:2px 6px; border-radius:4px; background:var(--surface2); }
+  .label-val.highlight { background:rgba(139,92,246,.25); color:var(--purple); font-weight:700; }
+
+  /* ── Algorithm Pseudocode ── */
+  .algorithm-ps {
+    font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size:0.74rem;
+    line-height:1.6;
+    background:var(--bg);
+    padding:12px;
+    border-radius:6px;
+    color:var(--text2);
+    overflow-x:auto;
+    white-space:pre;
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position:relative;
+    cursor:help;
+    border-bottom:1px dotted var(--text2);
+  }
+
+  /* ── Footer bar ── */
+  .footer-bar {
+    padding:8px 16px;
+    text-align:center;
+    font-size:0.7rem;
+    color:var(--text2);
+    border-top:1px solid var(--border);
+    background:var(--surface);
+  }
 </style>
 </head>
 <body>
+
 <div class="header">
   <div>
-    <h1>🇭🇺 匈牙利算法演示 <span style="font-weight:normal;font-size:0.8em;">Hungarian Algorithm</span></h1>
-    <div class="subtitle">Section 25.3 · The Assignment Problem · Algorithms (Cormen et al.)</div>
+    <h1><span class="icon">🔷</span>匈牙利算法逐步演示</h1>
+    <div class="header-sub">Hungarian Algorithm for the Assignment Problem · CLRS §25.3</div>
   </div>
-  <div style="display:flex;gap:6px;">
-    <button class="btn btn-secondary" onclick="resetAll()">🔄 重置</button>
-    <button class="btn btn-accent" onclick="toggleAuto()" id="autoBtn">▶ 自动播放</button>
-    <button class="btn btn-primary" onclick="nextStep()" id="nextBtn">▶ 下一步</button>
+  <div class="controls">
+    <button class="btn btn-primary" id="prevBtn" onclick="prevStep()" disabled title="撤销到上一步">◀ 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">下一步 ▶</button>
+    <button class="btn" id="autoBtn" onclick="toggleAuto()">▶ 自动播放</button>
+    <button class="btn btn-warning" id="regenerateBtn" onclick="regenerateMatrix()" title="生成新的随机矩阵并重置">🔄 新矩阵</button>
+    <select class="size-select" id="sizeSelect" onchange="changeSize()">
+      <option value="3">3×3</option><option value="4">4×4</option><option value="5">5×5</option>
+      <option value="6">6×6</option><option value="7" selected>7×7</option><option value="8">8×8</option>
+    </select>
+    <input type="range" class="speed-slider" id="speedSlider" min="400" max="3000" value="1000" step="100" title="自动播放速度(ms)">
   </div>
 </div>
 
-<div class="main-container">
-  <!-- LEFT PANEL: Controls + Weight Matrix -->
-  <div class="left-panel">
-    <div class="control-group">
-      <label>📐 二部图规模 (n × n)</label>
-      <select id="sizeSelect" onchange="changeSize()">
-        <option value="3">3 × 3</option>
-        <option value="4">4 × 4</option>
-        <option value="5">5 × 5</option>
-        <option value="6">6 × 6</option>
-        <option value="7" selected>7 × 7 (书例)</option>
-      </select>
-    </div>
-    <div class="control-group">
-      <label>⚡ 速度</label>
-      <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100">
-      <span style="font-size:0.7em;color:#889;">快 ⟷ 慢</span>
-    </div>
-
-    <div class="info-box">
-      <h3>📊 权重矩阵 W = [w(lᵢ, rⱼ)]</h3>
-      <div id="weightMatrix"></div>
-    </div>
-
-    <div class="legend">
-      <div class="legend-item"><div class="legend-color" style="background:rgba(233,69,96,0.4)"></div> 等式子图 Gₕ</div>
-      <div class="legend-item"><div class="legend-color" style="background:#4ecca3"></div> 匹配 M</div>
-      <div class="legend-item"><div class="legend-color" style="background:#ffd700"></div> 增广路径</div>
-      <div class="legend-item"><div class="legend-color" style="background:#533483"></div> BFS森林</div>
-      <div class="legend-item"><div class="legend-color" style="background:#88aadd"></div> 有向边 L→R</div>
-      <div class="legend-item"><div class="legend-color" style="background:#ddaa88"></div> 有向边 R→L</div>
+<div class="main-grid">
+  <div class="canvas-panel">
+    <canvas id="graphCanvas"></canvas>
+    <div class="canvas-legend">
+      <span><span class="legend-dot" style="background:var(--green)"></span> 匹配 M</span>
+      <span><span class="legend-dot" style="background:rgba(248,81,73,.4)"></span> Gₕ 非匹配边 L→R</span>
+      <span><span class="legend-dot" style="background:var(--gold)"></span> 增广路径 P</span>
+      <span><span class="legend-dot" style="background:var(--purple)"></span> Forest FL/FR</span>
     </div>
   </div>
 
-  <!-- CENTER: Graph Canvas -->
-  <div class="center-panel">
-    <div class="canvas-area" id="canvasContainer">
-      <canvas id="graphCanvas"></canvas>
-    </div>
-  </div>
-
-  <!-- RIGHT PANEL: State Info -->
-  <div class="right-panel">
+  <div class="side-panel">
     <div class="step-info" id="stepInfo">
       <div class="step-num">准备就绪</div>
-      <div class="step-desc">点击「下一步」开始演示匈牙利算法。该算法由 Harold Kuhn 于 1955 年提出，基于匈牙利数学家 Egerváry 和 Kőnig 的工作。</div>
+      <div class="step-desc">点击「下一步」开始演示。当前已初始化可行顶点标签和贪心匹配。</div>
     </div>
 
-    <div class="info-box">
-      <h3>🏷️ 可行顶点标签 h</h3>
-      <div id="vertexLabels"></div>
+    <div class="card">
+      <h3>📊 权重矩阵 & 等式子图 Gₕ</h3>
+      <div id="weightMatrix"></div>
+      <div style="margin-top:8px;">
+        <h3 style="margin-top:10px;">🏷 顶点标签</h3>
+        <div id="vertexLabels"></div>
+      </div>
     </div>
 
-    <div class="info-box">
+    <div class="card">
       <h3>🔗 当前匹配 M</h3>
       <div class="matching-list" id="currentMatching"></div>
     </div>
 
-    <div class="info-box">
+    <div class="card">
       <h3>🌳 BFS 森林</h3>
       <div id="bfsForest"></div>
     </div>
 
-    <div class="info-box" id="deltaBox" style="display:none;">
-      <h3>📐 δ 计算 (标签更新)</h3>
+    <div class="card" id="deltaBox" style="display:none;">
+      <h3>📐 δ 计算</h3>
       <div id="deltaInfo"></div>
     </div>
 
-    <div class="info-box">
+    <div class="card">
       <h3>📋 算法伪代码</h3>
       <pre class="algorithm-ps">HUNGARIAN(G):
 1  h ← DEFAULT-FEASIBLE-LABELING(G)
@@ -160,31 +361,70 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; h
   </div>
 </div>
 
+<div class="footer-bar">
+  基于 CLRS §25.3 · The Hungarian (Kuhn-Munkres) Algorithm for the Assignment Problem
+</div>
+
 <script>
 // ============= ALGORITHM ENGINE =============
 class HungarianAlgorithm {
   constructor(weights) {
     this.n = weights.length;
-    this.W = weights; // n×n weight matrix
-    this.Lh = new Array(this.n); // labels for L vertices
-    this.Rh = new Array(this.n); // labels for R vertices
-    this.M = new Map(); // matching: L index -> R index
-    this.R_to_L = new Map(); // reverse matching
-    this.FL = new Set(); // L vertices in BFS forest
-    this.FR = new Set(); // R vertices in BFS forest
-    this.parent = new Map(); // π: for path reconstruction ('R', r) -> ('L', l) and vice versa
+    this.W = weights;
+    this.Lh = new Array(this.n);
+    this.Rh = new Array(this.n);
+    this.M = new Map();
+    this.R_to_L = new Map();
+    this.FL = new Set();
+    this.FR = new Set();
+    this.parent = new Map();
     this.queue = [];
     this.delta = null;
-    this.phase = 'init'; // init, greedy, bfs_search, delta_update, augment, done
+    this.phase = 'init';
     this.substep = 0;
-    this.stepHistory = [];
     this.augmentingPath = null;
-    this.candidateEdges = []; // edges achieving delta
-    this.exploredEdges = []; // edges considered in BFS
+    this.candidateEdges = [];
+    this.exploredEdges = [];
+  }
+
+  // ── Deep snapshot for undo ──
+  snapshot() {
+    return {
+      Lh: [...this.Lh],
+      Rh: [...this.Rh],
+      M: new Map(this.M),
+      R_to_L: new Map(this.R_to_L),
+      FL: new Set(this.FL),
+      FR: new Set(this.FR),
+      parent: new Map(this.parent),
+      queue: [...this.queue],
+      delta: this.delta,
+      phase: this.phase,
+      substep: this.substep,
+      augmentingPath: this.augmentingPath ? this.augmentingPath.map(n=>({...n})) : null,
+      candidateEdges: this.candidateEdges.map(e=>[...e]),
+      exploredEdges: this.exploredEdges.map(e=>({from:{...e.from},to:{...e.to}}))
+    };
+  }
+
+  restore(snap) {
+    this.Lh = snap.Lh;
+    this.Rh = snap.Rh;
+    this.M = new Map(snap.M);
+    this.R_to_L = new Map(snap.R_to_L);
+    this.FL = new Set(snap.FL);
+    this.FR = new Set(snap.FR);
+    this.parent = new Map(snap.parent);
+    this.queue = [...snap.queue];
+    this.delta = snap.delta;
+    this.phase = snap.phase;
+    this.substep = snap.substep;
+    this.augmentingPath = snap.augmentingPath ? snap.augmentingPath.map(n=>({...n})) : null;
+    this.candidateEdges = snap.candidateEdges.map(e=>[...e]);
+    this.exploredEdges = snap.exploredEdges.map(e=>({from:{...e.from},to:{...e.to}}));
   }
 
   init() {
-    // Step 1: Default feasible labeling
     for (let i = 0; i < this.n; i++) {
       this.Lh[i] = Math.max(...this.W[i]);
       this.Rh[i] = 0;
@@ -202,18 +442,10 @@ class HungarianAlgorithm {
     this.exploredEdges = [];
   }
 
-  // Check if edge is in equality subgraph Gh
   isEqual(l, r) {
     return this.Lh[l] + this.Rh[r] === this.W[l][r];
   }
 
-  // Get edge direction in GM,h: 'LR' if not matched, 'RL' if matched
-  edgeDir(l, r) {
-    if (this.M.has(l) && this.M.get(l) === r) return 'RL';
-    return 'LR';
-  }
-
-  // Step 2: Greedy bipartite matching
   greedyMatching() {
     this.M.clear();
     this.R_to_L.clear();
@@ -228,49 +460,12 @@ class HungarianAlgorithm {
         }
       }
     }
-    if (this.M.size === this.n) {
-      this.phase = 'done';
-    } else {
-      this.phase = 'greedy_done';
-    }
+    this.phase = this.M.size === this.n ? 'done' : 'greedy_done';
     this.substep = 0;
   }
 
-  // Get all equality subgraph edges
-  getEqualityEdges() {
-    let edges = [];
-    for (let l = 0; l < this.n; l++) {
-      for (let r = 0; r < this.n; r++) {
-        if (this.isEqual(l, r)) {
-          edges.push([l, r]);
-        }
-      }
-    }
-    return edges;
-  }
+  isPerfect() { return this.M.size === this.n; }
 
-  // Get directed equality subgraph edges from GM,h
-  getDirectedEdges() {
-    let edges = [];
-    for (let l = 0; l < this.n; l++) {
-      for (let r = 0; r < this.n; r++) {
-        if (this.isEqual(l, r)) {
-          if (this.M.has(l) && this.M.get(l) === r) {
-            edges.push({ from: {side:'R', idx:r}, to: {side:'L', idx:l}, type: 'RL' });
-          } else {
-            edges.push({ from: {side:'L', idx:l}, to: {side:'R', idx:r}, type: 'LR' });
-          }
-        }
-      }
-    }
-    return edges;
-  }
-
-  isPerfect() {
-    return this.M.size === this.n;
-  }
-
-  // Start BFS search for augmenting path
   startBFS() {
     this.FL.clear();
     this.FR.clear();
@@ -281,14 +476,12 @@ class HungarianAlgorithm {
     this.exploredEdges = [];
     this.delta = null;
 
-    // Start from all unmatched L vertices
     for (let l = 0; l < this.n; l++) {
       if (!this.M.has(l)) {
         this.FL.add(l);
-        this.queue.push({side: 'L', idx: l});
+        this.queue.push({side:'L', idx:l});
       }
     }
-    // Edge case: already perfect matching
     if (this.FL.size === 0) {
       this.phase = 'done';
       return;
@@ -297,47 +490,38 @@ class HungarianAlgorithm {
     this.substep = 0;
   }
 
-  // One step of BFS
   bfsStep() {
     if (this.phase !== 'bfs_searching') return false;
-
     if (this.queue.length === 0) {
-      // Queue empty - need to update labels
       this.computeDelta();
       this.phase = 'delta_computed';
       return false;
     }
 
     let node = this.queue.shift();
-
     if (node.side === 'L') {
       let l = node.idx;
-      // Explore all equality edges from l to R-FR (L→R direction, not matched edges)
       for (let r = 0; r < this.n; r++) {
         if (this.FR.has(r)) continue;
         if (!this.isEqual(l, r)) continue;
-        // In GM,h, edges in Gh-M go L→R
-        if (this.M.has(l) && this.M.get(l) === r) continue; // matched edge goes R→L
+        if (this.M.has(l) && this.M.get(l) === r) continue;
 
-        this.exploredEdges.push({from: {side:'L', idx:l}, to: {side:'R', idx:r}});
-        this.parent.set('R'+r, {side:'L', idx:l});
+        this.exploredEdges.push({from:{side:'L',idx:l},to:{side:'R',idx:r}});
+        this.parent.set('R'+r, {side:'L',idx:l});
         this.FR.add(r);
 
         if (!this.R_to_L.has(r)) {
-          // Found unmatched R - augmenting path!
           this.augmentingPath = this.reconstructPath(r);
           this.phase = 'path_found';
           return true;
         } else {
-          // Follow matched edge R→L
           let matchedL = this.R_to_L.get(r);
           this.FL.add(matchedL);
-          this.queue.push({side: 'L', idx: matchedL});
-          this.parent.set('L'+matchedL, {side:'R', idx:r});
+          this.queue.push({side:'L', idx:matchedL});
+          this.parent.set('L'+matchedL, {side:'R',idx:r});
         }
       }
     }
-    // R nodes don't need explicit exploration - they were added with their matched L partner
     return false;
   }
 
@@ -347,7 +531,7 @@ class HungarianAlgorithm {
     while (this.parent.has(key)) {
       let p = this.parent.get(key);
       path.unshift(p);
-      key = (p.side === 'L' ? 'L' : 'R') + p.idx;
+      key = (p.side==='L'?'L':'R') + p.idx;
     }
     return path;
   }
@@ -372,30 +556,21 @@ class HungarianAlgorithm {
 
   applyDelta() {
     if (this.delta === null) return;
-    for (let l of this.FL) {
-      this.Lh[l] -= this.delta;
-    }
-    for (let r of this.FR) {
-      this.Rh[r] += this.delta;
-    }
+    for (let l of this.FL) this.Lh[l] -= this.delta;
+    for (let r of this.FR) this.Rh[r] += this.delta;
     this.phase = 'delta_applied';
 
-    // After delta, new equality edges appear: exactly those with l∈FL, r∈R−FR
-    // and slack was delta. Add these r to FR and process immediately.
     let foundPath = false;
     for (let [l, r, slack] of this.candidateEdges) {
       if (this.FR.has(r)) continue;
-      if (!this.isEqual(l, r)) continue; // should be equal now
+      if (!this.isEqual(l, r)) continue;
       this.parent.set('R'+r, {side:'L', idx:l});
       this.FR.add(r);
 
       if (!this.R_to_L.has(r)) {
-        // Unmatched R — found augmenting path!
         this.augmentingPath = this.reconstructPath(r);
         foundPath = true;
-        // Don't break yet — compute full path then exit
       } else {
-        // Follow matched edge R→L
         let matchedL = this.R_to_L.get(r);
         if (!this.FL.has(matchedL)) {
           this.FL.add(matchedL);
@@ -404,28 +579,20 @@ class HungarianAlgorithm {
       }
     }
 
-    if (foundPath) {
-      this.phase = 'path_found';
-      return;
-    }
+    if (foundPath) { this.phase = 'path_found'; return; }
 
-    // Restart BFS from all FL vertices (new edges may allow deeper exploration)
     this.queue = [];
-    for (let l of this.FL) {
-      this.queue.push({side:'L', idx:l});
-    }
+    for (let l of this.FL) this.queue.push({side:'L', idx:l});
     this.phase = 'bfs_searching';
   }
 
   applyAugment() {
     if (!this.augmentingPath) return;
-    // M = M ⊕ P (symmetric difference)
     for (let i = 0; i < this.augmentingPath.length - 1; i++) {
-      let a = this.augmentingPath[i];
-      let b = this.augmentingPath[i+1];
+      let a = this.augmentingPath[i], b = this.augmentingPath[i+1];
       let l, r;
-      if (a.side === 'L') { l = a.idx; r = b.idx; }
-      else { l = b.idx; r = a.idx; }
+      if (a.side === 'L') { l=a.idx; r=b.idx; }
+      else { l=b.idx; r=a.idx; }
 
       if (this.M.has(l) && this.M.get(l) === r) {
         this.M.delete(l);
@@ -444,18 +611,12 @@ class HungarianAlgorithm {
     this.exploredEdges = [];
     this.delta = null;
 
-    if (this.isPerfect()) {
-      this.phase = 'done';
-    } else {
-      this.phase = 'augment_done';
-    }
+    this.phase = this.isPerfect() ? 'done' : 'augment_done';
   }
 
   totalWeight() {
     let sum = 0;
-    for (let [l, r] of this.M) {
-      sum += this.W[l][r];
-    }
+    for (let [l, r] of this.M) sum += this.W[l][r];
     return sum;
   }
 }
@@ -466,73 +627,68 @@ let currentN = 7;
 let defaultWeights = null;
 let autoPlay = false;
 let autoTimer = null;
+let stepHistory = []; // Array of {snapshot, infoTitle, infoDesc}
+let historyCursor = -1; // Points to current active snapshot
 
-// Default weight matrices for different sizes
+// ── Example matrices ──
 const exampleMatrices = {
-  3: [
-    [4, 2, 5],
-    [3, 8, 1],
-    [7, 6, 2]
-  ],
-  4: [
-    [8, 5, 3, 6],
-    [2, 9, 7, 4],
-    [5, 3, 8, 2],
-    [7, 4, 6, 9]
-  ],
-  5: [
-    [7, 5, 8, 3, 6],
-    [4, 9, 2, 7, 5],
-    [6, 3, 8, 4, 9],
-    [5, 7, 4, 9, 3],
-    [8, 6, 3, 5, 7]
-  ],
-  6: [
-    [9, 6, 4, 7, 3, 8],
-    [5, 8, 9, 3, 6, 4],
-    [7, 3, 5, 8, 9, 6],
-    [4, 9, 7, 5, 2, 8],
-    [6, 5, 8, 9, 4, 3],
-    [8, 4, 6, 2, 7, 9]
-  ],
-  7: [
-    [12, 10,  8,  7,  6,  5,  9],
-    [ 8, 11,  7,  9,  6,  5, 10],
-    [ 9,  7, 13,  8, 10,  6,  5],
-    [ 6, 10,  9,  8,  7, 11,  5],
-    [ 7,  9,  5, 10,  8,  6, 11],
-    [10,  8,  6,  9, 12,  7,  5],
-    [ 8,  7, 10,  6,  9,  5, 11]
-  ]
+  3: [[4,2,5],[3,8,1],[7,6,2]],
+  4: [[8,5,3,6],[2,9,7,4],[5,3,8,2],[7,4,6,9]],
+  5: [[7,5,8,3,6],[4,9,2,7,5],[6,3,8,4,9],[5,7,4,9,3],[8,6,3,5,7]],
+  6: [[9,6,4,7,3,8],[5,8,9,3,6,4],[7,3,5,8,9,6],[4,9,7,5,2,8],[6,5,8,9,4,3],[8,4,6,2,7,9]],
+  7: [[12,10,8,7,6,5,9],[8,11,7,9,6,5,10],[9,7,13,8,10,6,5],[6,10,9,8,7,11,5],[7,9,5,10,8,6,11],[10,8,6,9,12,7,5],[8,7,10,6,9,5,11]]
 };
 
 function getDefaultWeights(n) {
-  // Use predefined or generate random
-  if (exampleMatrices[n]) return exampleMatrices[n].map(r => [...r]);
-  // Generate random n×n weights
+  if (exampleMatrices[n]) return exampleMatrices[n].map(r=>[...r]);
   let w = [];
-  for (let i = 0; i < n; i++) {
+  for (let i=0; i<n; i++) {
     w.push([]);
-    for (let j = 0; j < n; j++) {
-      w[i].push(Math.floor(Math.random() * 20) + 1);
-    }
+    for (let j=0; j<n; j++) w[i].push(Math.floor(Math.random()*20)+1);
   }
   return w;
 }
 
-function initAlgorithm() {
-  algo = new HungarianAlgorithm(getDefaultWeights(currentN));
+// ── Random matrix generator ──
+function generateRandomMatrix(n) {
+  let w = [];
+  for (let i=0; i<n; i++) {
+    w.push([]);
+    for (let j=0; j<n; j++) w[i].push(Math.floor(Math.random()*15)+1);
+  }
+  return w;
+}
+
+// ── Initialize ──
+function initAlgorithm(weights) {
+  let w = weights || getDefaultWeights(currentN);
+  algo = new HungarianAlgorithm(w);
+  defaultWeights = w;
   algo.init();
   algo.greedyMatching();
+  stepHistory = [];
+  historyCursor = -1;
   renderAll();
+  updateButtons();
 }
 
 function resetAll() {
   autoPlay = false;
   clearTimeout(autoTimer);
   document.getElementById('autoBtn').textContent = '▶ 自动播放';
-  initAlgorithm();
+  initAlgorithm(getDefaultWeights(currentN));
   updateInfo('准备就绪', '点击「下一步」开始演示匈牙利算法。当前已初始化可行顶点标签和贪心匹配。');
+}
+
+// ── Regenerate new random matrix ──
+function regenerateMatrix() {
+  autoPlay = false;
+  clearTimeout(autoTimer);
+  document.getElementById('autoBtn').textContent = '▶ 自动播放';
+  let newMatrix = generateRandomMatrix(currentN);
+  defaultWeights = newMatrix;
+  initAlgorithm(newMatrix);
+  updateInfo('🔄 新矩阵生成', `已生成 ${currentN}×${currentN} 随机权重矩阵并重置算法。`);
 }
 
 function changeSize() {
@@ -540,20 +696,16 @@ function changeSize() {
   clearTimeout(autoTimer);
   document.getElementById('autoBtn').textContent = '▶ 自动播放';
   currentN = parseInt(document.getElementById('sizeSelect').value);
-  initAlgorithm();
+  initAlgorithm(getDefaultWeights(currentN));
   updateInfo('规模已更改', `当前二部图规模: ${currentN} × ${currentN}`);
 }
 
+// ── Auto play ──
 function toggleAuto() {
   autoPlay = !autoPlay;
   let btn = document.getElementById('autoBtn');
-  if (autoPlay) {
-    btn.textContent = '⏸ 停止';
-    autoStep();
-  } else {
-    btn.textContent = '▶ 自动播放';
-    clearTimeout(autoTimer);
-  }
+  if (autoPlay) { btn.textContent = '⏸ 停止'; autoStep(); }
+  else { btn.textContent = '▶ 自动播放'; clearTimeout(autoTimer); }
 }
 
 function autoStep() {
@@ -568,93 +720,142 @@ function autoStep() {
   autoTimer = setTimeout(autoStep, speed);
 }
 
+// ── Save history entry BEFORE mutation ──
+function saveHistory(title, desc) {
+  // Discard future history if we're not at the tip
+  if (historyCursor < stepHistory.length - 1) {
+    stepHistory = stepHistory.slice(0, historyCursor + 1);
+  }
+  stepHistory.push({
+    snapshot: algo.snapshot(),
+    infoTitle: title,
+    infoDesc: desc
+  });
+  historyCursor = stepHistory.length - 1;
+}
+
+// ── Undo ──
+function prevStep() {
+  if (historyCursor <= 0) return; // Can't go before initial state
+
+  historyCursor--;
+  let entry = stepHistory[historyCursor];
+  algo.restore(entry.snapshot);
+  updateInfo(entry.infoTitle, entry.infoDesc);
+  renderAll();
+  updateButtons();
+}
+
+// ── Next step ──
 function nextStep() {
   if (!algo) return true;
 
   if (algo.phase === 'init_done' || algo.phase === 'greedy_done') {
-    // Start first BFS search
+    saveHistory('贪心匹配完成',
+      `初始可行标签 h 已设置。贪心匹配 |M|=${algo.M.size}/${algo.n}。开始新一轮BFS搜索。`);
     algo.startBFS();
+    let flStr = [...algo.FL].map(l=>'l'+(l+1)).join(', ');
     updateInfo('步骤 4a: 开始搜索增广路径',
-      `在 GM,h 中从未匹配的L顶点开始BFS搜索。队列初始: ${[...algo.FL].map(l=>'l'+(l+1)).join(', ')}`);
+      `在 GM,h 中从未匹配的L顶点开始BFS。队列初始: ${flStr || '(空)'}`);
     renderAll();
+    updateButtons();
     return false;
   }
 
   if (algo.phase === 'augment_done') {
-    // Start next BFS search
+    saveHistory('增广完成 |M|='+algo.M.size+'/'+algo.n,
+      `M = M ⊕ P 完成。当前匹配大小: ${algo.M.size}/${algo.n}。开始新一轮BFS搜索。`);
     algo.startBFS();
-    updateInfo('步骤 4a: 开始搜索增广路径',
-      `M已增广但仍非完美匹配。新一轮BFS搜索。未匹配L: ${[...Array(algo.n).keys()].filter(l=>!algo.M.has(l)).map(l=>'l'+(l+1)).join(', ')}`);
+    let unmatched = [...Array(algo.n).keys()].filter(l=>!algo.M.has(l)).map(l=>'l'+(l+1)).join(', ');
+    updateInfo('步骤 4a: 新一轮搜索',
+      `M已增广但仍非完美匹配。未匹配L: ${unmatched}`);
     renderAll();
+    updateButtons();
     return false;
   }
 
   if (algo.phase === 'bfs_searching') {
+    saveHistory('BFS: 队列='+algo.queue.length,
+      `FL={${[...algo.FL].map(l=>'l'+(l+1)).join(',')}} FR={${[...algo.FR].map(r=>'r'+(r+1)).join(',')}}`);
     let found = algo.bfsStep();
     if (algo.phase === 'delta_computed') {
-      // BFS failed, delta computed
-      updateInfo('步骤 4a: BFS 队列已空 — 计算 δ',
-        `BFS无法找到增广路径。计算 δ = min{l.h + r.h − w(l,r) : l∈FL, r∈R−FR} = <span class="delta-highlight">${algo.delta}</span>`);
+      updateInfo('步骤 4a: BFS 队列空 — 计算 δ',
+        `BFS无法找到增广路径。δ = min{l.h + r.h − w(l,r) : l∈FL, r∈R−FR} = <span class="delta-highlight">${algo.delta}</span>`);
     } else if (algo.phase === 'path_found') {
-      let pathStr = algo.augmentingPath.map(n => (n.side==='L'?'l':'r')+(n.idx+1)).join(' → ');
-      updateInfo('步骤 4a: 找到增广路径！',
+      let pathStr = algo.augmentingPath.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(' → ');
+      updateInfo('✅ 找到增广路径！',
         `M-增广路径: <span class="delta-highlight">${pathStr}</span><br>点击下一步执行增广 M = M ⊕ P`);
     } else if (found) {
-      // path found during bfsStep
-      let pathStr = algo.augmentingPath.map(n => (n.side==='L'?'l':'r')+(n.idx+1)).join(' → ');
-      updateInfo('步骤 4a: 找到增广路径！',
+      let pathStr = algo.augmentingPath.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(' → ');
+      updateInfo('✅ 找到增广路径！',
         `M-增广路径: <span class="delta-highlight">${pathStr}</span><br>点击下一步执行增广 M = M ⊕ P`);
     } else {
-      let qStr = algo.queue.length > 0 ? algo.queue.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(', ') : '(空)';
+      let qStr = algo.queue.length>0 ? algo.queue.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(', ') : '(空)';
       updateInfo('步骤 4a: BFS 搜索中',
         `FL={${[...algo.FL].map(l=>'l'+(l+1)).join(',')}} FR={${[...algo.FR].map(r=>'r'+(r+1)).join(',')}}<br>队列Q: ${qStr}`);
     }
     renderAll();
+    updateButtons();
     return false;
   }
 
   if (algo.phase === 'delta_computed') {
+    saveHistory('δ='+algo.delta,
+      `δ = ${algo.delta}, 候选边=${algo.candidateEdges.length}条`);
     algo.applyDelta();
     let flStr = [...algo.FL].map(l=>'l'+(l+1)).join(', ');
     let frStr = [...algo.FR].map(r=>'r'+(r+1)).join(', ');
     updateInfo('步骤 4a: 应用 δ 更新标签',
-      `l∈FL(${flStr}) 的标签 −${algo.delta}<br>r∈FR(${frStr}) 的标签 +${algo.delta}<br>新等式边已进入 GM,h，继续BFS`);
+      `l∈FL(${flStr}) 标签 −${algo.delta}<br>r∈FR(${frStr}) 标签 +${algo.delta}<br>新等式边已进入 GM,h`);
     renderAll();
+    updateButtons();
     return false;
   }
 
   if (algo.phase === 'path_found') {
+    let pathStr = algo.augmentingPath.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(' → ');
+    saveHistory('增广路径: '+pathStr,
+      `P = ${pathStr}`);
     algo.applyAugment();
     if (algo.phase === 'done') {
       let sum = algo.totalWeight();
       let matchStr = [...algo.M].map(([l,r])=>`(l${l+1},r${r+1})`).join(' ');
-      updateInfo('✅ 算法完成！',
+      updateInfo('🏆 算法完成！',
         `完美匹配: ${matchStr}<br>总权重: <span class="delta-highlight">${sum}</span>`);
     } else {
       updateInfo('步骤 5: M = M ⊕ P',
         '增广完成。点击下一步开始新一轮搜索。');
     }
     renderAll();
+    updateButtons();
     return algo.phase === 'done';
   }
 
   if (algo.phase === 'done') {
+    updateButtons();
     return true;
   }
 
   renderAll();
+  updateButtons();
   return false;
+}
+
+function updateButtons() {
+  document.getElementById('prevBtn').disabled = (historyCursor <= 0);
+  document.getElementById('nextBtn').disabled = (algo && algo.phase === 'done');
+  document.getElementById('regenerateBtn').disabled = false;
 }
 
 function updateInfo(title, desc) {
   document.getElementById('stepInfo').innerHTML = `
     <div class="step-num">${title}</div>
-    <div class="step-desc">${desc}</div>
-  `;
+    <div class="step-desc">${desc}</div>`;
 }
 
 // ============= RENDERING =============
 function renderAll() {
+  if (!algo) return;
   renderWeightMatrix();
   renderLabels();
   renderMatching();
@@ -666,15 +867,15 @@ function renderAll() {
 function renderWeightMatrix() {
   let html = '<table class="weight-table">';
   html += '<tr><th class="col-label"></th>';
-  for (let j = 0; j < algo.n; j++) html += `<th class="col-label">r<sub>${j+1}</sub></th>`;
+  for (let j=0; j<algo.n; j++) html += `<th class="col-label">r<sub>${j+1}</sub></th>`;
   html += '</tr>';
-  for (let i = 0; i < algo.n; i++) {
+  for (let i=0; i<algo.n; i++) {
     html += `<tr><td class="row-label">l<sub>${i+1}</sub></td>`;
-    for (let j = 0; j < algo.n; j++) {
+    for (let j=0; j<algo.n; j++) {
       let cls = '';
-      if (algo.isEqual(i, j)) cls = 'eq-edge';
-      if (algo.M.has(i) && algo.M.get(i) === j) cls = 'match-edge';
-      if (algo.FL.has(i) && !algo.FR.has(j)) cls += ' forest-l';
+      if (algo.isEqual(i,j)) cls='eq-edge';
+      if (algo.M.has(i) && algo.M.get(i)===j) cls='match-edge';
+      if (algo.FL.has(i) && !algo.FR.has(j)) cls+=' forest-l';
       html += `<td class="${cls}">${algo.W[i][j]}</td>`;
     }
     html += '</tr>';
@@ -686,278 +887,214 @@ function renderWeightMatrix() {
 function renderLabels() {
   let html = '<div style="display:flex;gap:20px;">';
   html += '<div><strong>L 顶点:</strong><br>';
-  for (let i = 0; i < algo.n; i++) {
+  for (let i=0; i<algo.n; i++) {
     let cls = algo.FL.has(i) ? 'label-val highlight' : 'label-val';
-    html += `<span class="${cls}">l<sub>${i+1}</sub>.h = ${algo.Lh[i]}</span> `;
+    html += `<span class="${cls}">l<sub>${i+1}</sub>.h=${algo.Lh[i]}</span> `;
   }
   html += '</div><div><strong>R 顶点:</strong><br>';
-  for (let j = 0; j < algo.n; j++) {
+  for (let j=0; j<algo.n; j++) {
     let cls = algo.FR.has(j) ? 'label-val highlight' : 'label-val';
-    html += `<span class="${cls}">r<sub>${j+1}</sub>.h = ${algo.Rh[j]}</span> `;
+    html += `<span class="${cls}">r<sub>${j+1}</sub>.h=${algo.Rh[j]}</span> `;
   }
   html += '</div></div>';
   document.getElementById('vertexLabels').innerHTML = html;
 }
 
 function renderMatching() {
-  if (algo.M.size === 0) {
-    document.getElementById('currentMatching').innerHTML = 'M = ∅';
+  if (algo.M.size===0) {
+    document.getElementById('currentMatching').innerHTML='M = ∅';
     return;
   }
-  let parts = [];
-  for (let [l, r] of algo.M) {
-    parts.push(`(l<sub>${l+1}</sub>, r<sub>${r+1}</sub>) w=${algo.W[l][r]}`);
-  }
-  document.getElementById('currentMatching').innerHTML = 'M = {' + parts.join(', ') + '}<br>|M| = ' + algo.M.size + '/' + algo.n;
+  let parts=[];
+  for (let [l,r] of algo.M) parts.push(`(l<sub>${l+1}</sub>, r<sub>${r+1}</sub>) w=${algo.W[l][r]}`);
+  document.getElementById('currentMatching').innerHTML='M = {'+parts.join(', ')+'}<br>|M| = '+algo.M.size+'/'+algo.n;
 }
 
 function renderBFS() {
-  let html = '';
-  html += `FL = {${[...algo.FL].map(l=>'l<sub>'+(l+1)+'</sub>').join(', ') || '∅'}}<br>`;
-  html += `FR = {${[...algo.FR].map(r=>'r<sub>'+(r+1)+'</sub>').join(', ') || '∅'}}<br>`;
-  html += `队列 Q = [${algo.queue.map(n=>(n.side==='L'?'l':'r')+'<sub>'+(n.idx+1)+'</sub>').join(', ') || '空'}]`;
+  let html='';
+  html+=`FL = {${[...algo.FL].map(l=>'l<sub>'+(l+1)+'</sub>').join(', ')||'∅'}}<br>`;
+  html+=`FR = {${[...algo.FR].map(r=>'r<sub>'+(r+1)+'</sub>').join(', ')||'∅'}}<br>`;
+  html+=`队列 Q = [${algo.queue.map(n=>(n.side==='L'?'l':'r')+'<sub>'+(n.idx+1)+'</sub>').join(', ')||'空'}]`;
   if (algo.augmentingPath) {
-    html += `<br>🔍 增广路径: <span class="delta-highlight">${algo.augmentingPath.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(' → ')}</span>`;
+    html+=`<br>🔍 增广路径: <span class="delta-highlight">${algo.augmentingPath.map(n=>(n.side==='L'?'l':'r')+(n.idx+1)).join(' → ')}</span>`;
   }
-  document.getElementById('bfsForest').innerHTML = html;
+  document.getElementById('bfsForest').innerHTML=html;
 }
 
 function renderDelta() {
-  let box = document.getElementById('deltaBox');
-  if (algo.delta !== null) {
-    box.style.display = 'block';
-    let html = `δ = ${algo.delta}<br>`;
-    html += `取得 δ 的边: `;
-    if (algo.candidateEdges.length > 0) {
-      html += algo.candidateEdges.map(([l,r,s]) => `(l<sub>${l+1}</sub>, r<sub>${r+1}</sub>) slack=${s}`).join(', ');
-    } else {
-      html += '(无)';
-    }
-    html += `<br>更新: l∈FL 标签 −${algo.delta}, r∈FR 标签 +${algo.delta}`;
-    document.getElementById('deltaInfo').innerHTML = html;
-  } else {
-    box.style.display = 'none';
-  }
+  let box=document.getElementById('deltaBox');
+  if (algo.delta!==null) {
+    box.style.display='block';
+    let html=`δ = ${algo.delta}<br>`;
+    html+=`取得 δ 的边: `;
+    if (algo.candidateEdges.length>0) {
+      html+=algo.candidateEdges.map(([l,r,s])=>`(l<sub>${l+1}</sub>,r<sub>${r+1}</sub>) slack=${s}`).join(', ');
+    } else { html+='(无)'; }
+    html+=`<br>更新: l∈FL −${algo.delta}, r∈FR +${algo.delta}`;
+    document.getElementById('deltaInfo').innerHTML=html;
+  } else { box.style.display='none'; }
 }
 
 // ============= CANVAS DRAWING =============
 function drawGraph() {
-  const container = document.getElementById('canvasContainer');
-  const canvas = document.getElementById('graphCanvas');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = container.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  const container=document.getElementById('canvasContainer')||document.querySelector('.canvas-panel');
+  const canvas=document.getElementById('graphCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const rect=container.getBoundingClientRect();
+  canvas.width=rect.width*dpr;
+  canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px';
+  canvas.style.height=rect.height+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
 
-  const W = rect.width;
-  const H = rect.height;
-  const n = algo.n;
+  const W=rect.width, H=rect.height;
+  const n=algo.n;
+  ctx.clearRect(0,0,W,H);
 
-  ctx.clearRect(0, 0, W, H);
+  const leftX=W*.12, rightX=W*.88;
+  const startY=H*.08;
+  const nodeSpacing=Math.min((H-startY*2)/(n-1),55);
+  const nodeRadius=Math.min(18,nodeSpacing*.35);
 
-  // Layout
-  const leftX = W * 0.12;
-  const rightX = W * 0.88;
-  const startY = H * 0.08;
-  const nodeSpacing = Math.min((H - startY * 2) / (n - 1), 55);
-  const nodeRadius = Math.min(18, nodeSpacing * 0.35);
+  const Lpos=[], Rpos=[];
+  for (let i=0;i<n;i++) Lpos.push({x:leftX, y:startY+i*nodeSpacing});
+  for (let j=0;j<n;j++) Rpos.push({x:rightX, y:startY+j*nodeSpacing});
 
-  // L nodes
-  const Lpos = [];
-  for (let i = 0; i < n; i++) {
-    Lpos.push({ x: leftX, y: startY + i * nodeSpacing });
-  }
-  // R nodes
-  const Rpos = [];
-  for (let j = 0; j < n; j++) {
-    Rpos.push({ x: rightX, y: startY + j * nodeSpacing });
-  }
-
-  // Collect edges to draw
-  let eqEdges = [];
-  let matchEdges = [];
-  let augPathPairSet = new Set();
-
-  // Equality subgraph edges
-  for (let l = 0; l < n; l++) {
-    for (let r = 0; r < n; r++) {
-      if (algo.isEqual(l, r)) {
-        eqEdges.push([l, r]);
-        if (algo.M.has(l) && algo.M.get(l) === r) {
-          matchEdges.push([l, r]);
-        }
+  let eqEdges=[], matchEdges=[], augPathPairSet=new Set();
+  for (let l=0;l<n;l++) {
+    for (let r=0;r<n;r++) {
+      if (algo.isEqual(l,r)) {
+        eqEdges.push([l,r]);
+        if (algo.M.has(l) && algo.M.get(l)===r) matchEdges.push([l,r]);
       }
     }
   }
-
-  // Augmenting path edges
   if (algo.augmentingPath) {
-    for (let i = 0; i < algo.augmentingPath.length - 1; i++) {
-      let a = algo.augmentingPath[i], b = algo.augmentingPath[i+1];
-      let l, r;
-      if (a.side === 'L') { l = a.idx; r = b.idx; }
-      else { l = b.idx; r = a.idx; }
+    for (let i=0;i<algo.augmentingPath.length-1;i++) {
+      let a=algo.augmentingPath[i], b=algo.augmentingPath[i+1];
+      let l,r;
+      if (a.side==='L'){l=a.idx;r=b.idx;}else{l=b.idx;r=a.idx;}
       augPathPairSet.add(`${l},${r}`);
     }
   }
 
-  // Draw all equality edges (light background)
-  for (let [l, r] of eqEdges) {
-    let p1 = Lpos[l], p2 = Rpos[r];
-    let isMatch = algo.M.has(l) && algo.M.get(l) === r;
-    let isAug = augPathPairSet.has(`${l},${r}`);
+  // Draw equality edges
+  for (let [l,r] of eqEdges) {
+    let p1=Lpos[l], p2=Rpos[r];
+    let isMatch=algo.M.has(l)&&algo.M.get(l)===r;
+    let isAug=augPathPairSet.has(`${l},${r}`);
     ctx.beginPath();
-    ctx.moveTo(p1.x + nodeRadius, p1.y);
-    ctx.lineTo(p2.x - nodeRadius, p2.y);
-    ctx.strokeStyle = isAug ? '#ffd700' : (isMatch ? '#4ecca3' : 'rgba(233,69,96,0.2)');
-    ctx.lineWidth = isAug ? 3 : (isMatch ? 2.5 : 1);
-    if (isMatch && !isAug) {
-      ctx.setLineDash([]);
-    }
-    ctx.stroke();
+    ctx.moveTo(p1.x+nodeRadius,p1.y);
+    ctx.lineTo(p2.x-nodeRadius,p2.y);
+    ctx.strokeStyle=isAug?'#ffd700':(isMatch?'#3fb950':'rgba(248,81,73,0.18)');
+    ctx.lineWidth=isAug?3.5:(isMatch?2.5:1);
     ctx.setLineDash([]);
+    ctx.stroke();
 
-    // Draw arrowhead for directed edges
-    if (isMatch) {
-      // R→L direction
-      drawArrow(ctx, p2.x - nodeRadius, p2.y, p1.x + nodeRadius, p1.y, '#4ecca3');
-    } else if (!isAug) {
-      // L→R direction
-      drawArrow(ctx, p1.x + nodeRadius, p1.y, p2.x - nodeRadius, p2.y, 'rgba(233,69,96,0.4)');
-    }
+    if (isMatch && !isAug) drawArrow(ctx,p2.x-nodeRadius,p2.y,p1.x+nodeRadius,p1.y,'#3fb950');
+    else if (!isAug) drawArrow(ctx,p1.x+nodeRadius,p1.y,p2.x-nodeRadius,p2.y,'rgba(248,81,73,0.35)');
     if (isAug) {
-      // Draw arrow on augmenting path
-      let fromX, fromY, toX, toY;
-      if (algo.M.has(l) && algo.M.get(l) === r) {
-        fromX = p2.x - nodeRadius; fromY = p2.y;
-        toX = p1.x + nodeRadius; toY = p1.y;
-      } else {
-        fromX = p1.x + nodeRadius; fromY = p1.y;
-        toX = p2.x - nodeRadius; toY = p2.y;
-      }
-      drawArrow(ctx, fromX, fromY, toX, toY, '#ffd700');
+      let fromX,fromY,toX,toY;
+      if (algo.M.has(l)&&algo.M.get(l)===r){fromX=p2.x-nodeRadius;fromY=p2.y;toX=p1.x+nodeRadius;toY=p1.y;}
+      else{fromX=p1.x+nodeRadius;fromY=p1.y;toX=p2.x-nodeRadius;toY=p2.y;}
+      drawArrow(ctx,fromX,fromY,toX,toY,'#ffd700');
     }
 
-    // Weight label at midpoint
-    let mx = (p1.x + p2.x) / 2;
-    let my = (p1.y + p2.y) / 2 - 6;
-    ctx.fillStyle = isAug ? '#ffd700' : (isMatch ? '#4ecca3' : 'rgba(255,255,255,0.5)');
-    ctx.font = `${Math.max(9, nodeRadius*0.6)}px Consolas`;
-    ctx.fillText(algo.W[l][r], mx - 8, my);
+    let mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2-6;
+    ctx.fillStyle=isAug?'#ffd700':(isMatch?'#3fb950':'rgba(255,255,255,.45)');
+    ctx.font=`${Math.max(9,nodeRadius*.6)}px monospace`;
+    ctx.fillText(algo.W[l][r],mx-8,my);
   }
 
-  // Draw BFS explored edges (highlight)
+  // Draw explored dots
   for (let e of algo.exploredEdges) {
-    let from, to;
-    if (e.from.side === 'L') {
-      from = Lpos[e.from.idx]; to = Rpos[e.to.idx];
-    } else {
-      from = Rpos[e.from.idx]; to = Lpos[e.to.idx];
-    }
+    let from,to;
+    if (e.from.side==='L'){from=Lpos[e.from.idx];to=Rpos[e.to.idx];}
+    else{from=Rpos[e.from.idx];to=Lpos[e.to.idx];}
     ctx.beginPath();
-    ctx.arc((from.x+to.x)/2, (from.y+to.y)/2, 8, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(83,52,131,0.4)';
+    ctx.arc((from.x+to.x)/2,(from.y+to.y)/2,7,0,Math.PI*2);
+    ctx.fillStyle='rgba(139,92,246,.35)';
     ctx.fill();
   }
 
   // Draw L nodes
-  for (let i = 0; i < n; i++) {
-    let p = Lpos[i];
-    let matched = algo.M.has(i);
-    let inForest = algo.FL.has(i);
-    let isStart = inForest && algo.queue.length >= 0;
-
-    // Glow for forest nodes
+  for (let i=0;i<n;i++) {
+    let p=Lpos[i];
+    let matched=algo.M.has(i), inForest=algo.FL.has(i);
     if (inForest) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, nodeRadius + 4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(83,52,131,0.5)';
+      ctx.arc(p.x,p.y,nodeRadius+5,0,Math.PI*2);
+      ctx.fillStyle='rgba(139,92,246,.45)';
       ctx.fill();
     }
-
     ctx.beginPath();
-    ctx.arc(p.x, p.y, nodeRadius, 0, Math.PI * 2);
-    ctx.fillStyle = matched ? '#4ecca3' : '#2d5a7a';
+    ctx.arc(p.x,p.y,nodeRadius,0,Math.PI*2);
+    ctx.fillStyle=matched?'#3fb950':'#2870a0';
     ctx.fill();
-    ctx.strokeStyle = '#8899aa';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle='#555';
+    ctx.lineWidth=1.5;
     ctx.stroke();
-
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${nodeRadius*0.8}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`l${i+1}`, p.x, p.y);
-
-    // Label value
-    ctx.fillStyle = '#ffd700';
-    ctx.font = `${nodeRadius*0.55}px sans-serif`;
-    ctx.fillText(`h=${algo.Lh[i]}`, p.x, p.y + nodeRadius + 12);
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${nodeRadius*.8}px sans-serif`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(`l${i+1}`,p.x,p.y);
+    ctx.fillStyle='#e3b341';
+    ctx.font=`${nodeRadius*.55}px sans-serif`;
+    ctx.fillText(`h=${algo.Lh[i]}`,p.x,p.y+nodeRadius+13);
   }
 
   // Draw R nodes
-  for (let j = 0; j < n; j++) {
-    let p = Rpos[j];
-    let matched = algo.R_to_L.has(j);
-    let inForest = algo.FR.has(j);
-
+  for (let j=0;j<n;j++) {
+    let p=Rpos[j];
+    let matched=algo.R_to_L.has(j), inForest=algo.FR.has(j);
     if (inForest) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, nodeRadius + 4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(83,52,131,0.5)';
+      ctx.arc(p.x,p.y,nodeRadius+5,0,Math.PI*2);
+      ctx.fillStyle='rgba(139,92,246,.45)';
       ctx.fill();
     }
-
     ctx.beginPath();
-    ctx.arc(p.x, p.y, nodeRadius, 0, Math.PI * 2);
-    ctx.fillStyle = matched ? '#4ecca3' : '#5a3d6a';
+    ctx.arc(p.x,p.y,nodeRadius,0,Math.PI*2);
+    ctx.fillStyle=matched?'#3fb950':'#6b3780';
     ctx.fill();
-    ctx.strokeStyle = '#8899aa';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle='#555';
+    ctx.lineWidth=1.5;
     ctx.stroke();
-
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${nodeRadius*0.8}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`r${j+1}`, p.x, p.y);
-
-    ctx.fillStyle = '#ffd700';
-    ctx.font = `${nodeRadius*0.55}px sans-serif`;
-    ctx.fillText(`h=${algo.Rh[j]}`, p.x, p.y + nodeRadius + 12);
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${nodeRadius*.8}px sans-serif`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(`r${j+1}`,p.x,p.y);
+    ctx.fillStyle='#e3b341';
+    ctx.font=`${nodeRadius*.55}px sans-serif`;
+    ctx.fillText(`h=${algo.Rh[j]}`,p.x,p.y+nodeRadius+13);
   }
 
   // Title
-  ctx.fillStyle = '#aab';
-  ctx.font = '14px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('等式子图 Gₕ → 有向等式子图 GM,h (L→R 非匹配边, R→L 匹配边)', W/2, startY - 10);
+  ctx.fillStyle='#666';
+  ctx.font='13px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('等式子图 Gₕ → 有向 GM,h (L→R 非匹配, R→L 匹配)',W/2,startY-10);
 }
 
-function drawArrow(ctx, fromX, fromY, toX, toY, color) {
-  let angle = Math.atan2(toY - fromY, toX - fromX);
-  let arrowLen = 8;
-  let midX = (fromX + toX) / 2;
-  let midY = (fromY + toY) / 2;
-  ctx.fillStyle = color;
+function drawArrow(ctx,fromX,fromY,toX,toY,color) {
+  let angle=Math.atan2(toY-fromY,toX-fromX);
+  let arrowLen=8;
+  let midX=(fromX+toX)/2, midY=(fromY+toY)/2;
+  ctx.fillStyle=color;
   ctx.beginPath();
-  ctx.moveTo(midX, midY);
-  ctx.lineTo(midX - arrowLen * Math.cos(angle - Math.PI/6), midY - arrowLen * Math.sin(angle - Math.PI/6));
-  ctx.lineTo(midX - arrowLen * Math.cos(angle + Math.PI/6), midY - arrowLen * Math.sin(angle + Math.PI/6));
+  ctx.moveTo(midX,midY);
+  ctx.lineTo(midX-arrowLen*Math.cos(angle-Math.PI/6),midY-arrowLen*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(midX-arrowLen*Math.cos(angle+Math.PI/6),midY-arrowLen*Math.sin(angle+Math.PI/6));
   ctx.closePath();
   ctx.fill();
 }
 
-// Handle resize
-window.addEventListener('resize', () => {
-  if (algo) drawGraph();
-});
+window.addEventListener('resize',()=>{if(algo)drawGraph();});
 
-// Initialize
+// ── Startup ──
 initAlgorithm();
 </script>
 </body>
